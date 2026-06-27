@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manuel's Reviews Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --terracotta:#C1502E;
+  --terracotta-dark:#A23E20;
+  --terracotta-light:#E2785A;
+  --cream:#FAF3E7;
+  --cream-dark:#F0E2C9;
+  --green:#2F4A3D;
+  --green-light:#3F6552;
+  --yellow:#E8A33D;
+  --yellow-dark:#C9851F;
+  --charcoal:#2B2826;
+  --white:#FFFFFF;
+  --gray:#8A8175;
+  --gray-light:#D9D1C2;
+  --radius:14px;
+  --radius-sm:8px;
+  --shadow:0 2px 12px rgba(43,40,38,0.08);
+  --shadow-md:0 6px 24px rgba(43,40,38,0.12);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--cream);
+  color:var(--charcoal);
+}
+.app{display:flex;min-height:100vh;}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{
+  width:268px;flex-shrink:0;background:var(--green);color:var(--cream);
+  padding:22px 16px 24px;display:flex;flex-direction:column;gap:18px;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px 14px;border-bottom:1px solid rgba(250,243,231,0.15);}
+.brand-mark{width:38px;height:38px;border-radius:10px;background:var(--terracotta);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:var(--cream);flex-shrink:0;}
+.brand-text h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.2px;}
+.brand-text p{font-size:11px;margin:2px 0 0;color:var(--gray-light);}
+.sidebar-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);padding:0 6px;margin-top:4px;}
+.location-list{display:flex;flex-direction:column;gap:4px;overflow-y:auto;}
+.location-item{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 10px;border-radius:var(--radius-sm);cursor:pointer;
+  border:1px solid transparent;transition:background .15s;
+}
+.location-item:hover{background:rgba(250,243,231,0.08);}
+.location-item.active{background:var(--cream);color:var(--charcoal);}
+.location-item.active .loc-name{color:var(--charcoal);}
+.location-item.active .loc-addr{color:var(--gray);}
+.loc-info{display:flex;flex-direction:column;min-width:0;}
+.loc-name{font-size:13.5px;font-weight:600;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.loc-addr{font-size:10.5px;color:var(--gray-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.loc-badge{font-size:11px;font-weight:700;background:rgba(250,243,231,0.12);padding:3px 7px;border-radius:20px;flex-shrink:0;}
+.location-item.active .loc-badge{background:var(--green);color:var(--cream);}
+.loc-urgent-dot{width:8px;height:8px;border-radius:50%;background:var(--terracotta-light);flex-shrink:0;box-shadow:0 0 0 2px rgba(250,243,231,0.25);}
+
+.sidebar-footer{margin-top:auto;font-size:10.5px;color:var(--gray-light);padding:10px 6px 0;border-top:1px solid rgba(250,243,231,0.15);line-height:1.5;}
+
+/* ---------- MAIN ---------- */
+.main{flex:1;min-width:0;padding:22px 28px 40px;}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+.topbar h2{margin:0 0 4px;font-size:22px;}
+.topbar .sub{color:var(--gray);font-size:13px;margin:0;}
+.mobile-toggle{display:none;background:var(--green);color:var(--cream);border:none;border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;}
+
+.platform-status{display:flex;gap:8px;flex-wrap:wrap;}
+.status-chip{display:flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--gray-light);border-radius:20px;padding:6px 11px;font-size:11.5px;font-weight:600;color:var(--charcoal);}
+.dot-ok{width:7px;height:7px;border-radius:50%;background:var(--green-light);}
+.dot-pending{width:7px;height:7px;border-radius:50%;background:var(--yellow);}
+
+/* ---------- ALERT BANNER ---------- */
+.alert-banner{
+  display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,#fbe7df,#fdf3ee);
+  border:1px solid var(--terracotta-light);border-radius:var(--radius);padding:13px 16px;margin-bottom:18px;
+}
+.alert-banner .icon{width:34px;height:34px;border-radius:50%;background:var(--terracotta);color:var(--white);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
+.alert-banner strong{font-size:14px;}
+.alert-banner p{margin:1px 0 0;font-size:12.5px;color:var(--charcoal);}
+.alert-banner button{margin-left:auto;background:var(--terracotta);color:var(--white);border:none;padding:8px 14px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:700;cursor:pointer;flex-shrink:0;}
+.alert-banner.hidden{display:none;}
+
+/* ---------- SUMMARY ---------- */
+.summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+.summary-card{background:var(--white);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);}
+.summary-card .label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+.summary-card .value{font-size:24px;font-weight:800;margin-top:4px;color:var(--charcoal);}
+.summary-card .value.accent{color:var(--terracotta);}
+.summary-card .value.green{color:var(--green);}
+.summary-card .hint{font-size:11px;color:var(--gray);margin-top:2px;}
+
+.trend-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:20px;}
+.trend-card h3{margin:0 0 10px;font-size:14px;}
+.trend-wrap{height:160px;}
+
+/* ---------- FILTERS ---------- */
+.filters{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:18px;}
+.filter-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.filter-row + .filter-row{margin-top:10px;}
+.platform-tabs{display:flex;gap:6px;background:var(--cream-dark);padding:4px;border-radius:24px;}
+.ptab{border:none;background:transparent;padding:7px 14px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--charcoal);display:flex;align-items:center;gap:6px;}
+.ptab.active{background:var(--green);color:var(--cream);}
+.chip-group{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{border:1px solid var(--gray-light);background:var(--white);padding:6px 12px;border-radius:18px;font-size:12px;font-weight:600;cursor:pointer;color:var(--charcoal);}
+.chip.active{background:var(--yellow);border-color:var(--yellow-dark);color:var(--charcoal);}
+select, .search-box input{
+  border:1px solid var(--gray-light);border-radius:var(--radius-sm);padding:8px 10px;font-size:12.5px;background:var(--white);color:var(--charcoal);
+}
+.search-box{flex:1;min-width:200px;display:flex;align-items:center;gap:6px;border:1px solid var(--gray-light);border-radius:var(--radius-sm);padding:0 10px;background:var(--white);}
+.search-box input{border:none;flex:1;padding:8px 0;outline:none;}
+.clear-filters{background:none;border:none;color:var(--terracotta);font-size:12px;font-weight:700;cursor:pointer;}
+
+/* ---------- REVIEW LIST ---------- */
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.list-header span{font-size:13px;color:var(--gray);font-weight:600;}
+.reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;}
+.review-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:8px;position:relative;border-top:4px solid var(--gray-light);}
+.review-card.urgent{border-top-color:var(--terracotta);}
+.review-card .urgent-flag{position:absolute;top:-9px;right:14px;background:var(--terracotta);color:var(--white);font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;letter-spacing:.03em;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.platform-badge{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:4px 9px;border-radius:20px;color:var(--white);}
+.platform-badge.google{background:#4285F4;}
+.platform-badge.yelp{background:#D32323;}
+.platform-badge.tripadvisor{background:#34E0A1;color:#1c3b32;}
+.card-date{font-size:11px;color:var(--gray);white-space:nowrap;}
+.card-name{font-weight:700;font-size:14px;margin-top:2px;}
+.stars{color:var(--yellow-dark);font-size:14px;letter-spacing:1px;}
+.card-loc{font-size:11px;color:var(--gray);font-weight:600;}
+.card-text{font-size:13px;line-height:1.5;color:var(--charcoal);}
+.sentiment{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:14px;text-transform:uppercase;letter-spacing:.03em;width:fit-content;}
+.sentiment.positive{background:#E4EEE6;color:var(--green-light);}
+.sentiment.neutral{background:#FBF1DD;color:var(--yellow-dark);}
+.sentiment.negative{background:#F8E2DC;color:var(--terracotta-dark);}
+.card-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:4px;flex-wrap:wrap;gap:8px;}
+.reply-status{font-size:11.5px;font-weight:700;}
+.reply-status.replied{color:var(--green-light);}
+.reply-status.pending{color:var(--terracotta);}
+.card-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.btn{border:none;border-radius:var(--radius-sm);padding:7px 11px;font-size:11.5px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:var(--terracotta);color:var(--white);}
+.btn-primary:hover{background:var(--terracotta-dark);}
+.btn-ghost{background:var(--cream-dark);color:var(--charcoal);}
+.btn-ghost:hover{background:var(--gray-light);}
+.suggest-box{display:none;background:var(--cream);border:1px dashed var(--gray-light);border-radius:var(--radius-sm);padding:10px;margin-top:6px;}
+.suggest-box.open{display:block;}
+.suggest-box textarea{width:100%;min-height:110px;border:1px solid var(--gray-light);border-radius:var(--radius-sm);padding:8px;font-size:12.5px;font-family:inherit;resize:vertical;background:var(--white);}
+.suggest-box .suggest-actions{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.empty-state{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--gray);}
+.empty-state .big{font-size:34px;}
+
+/* ---------- MOBILE ---------- */
+@media (max-width:860px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%);transition:transform .2s;width:80%;max-width:300px;}
+  .sidebar.open{transform:translateX(0);box-shadow:6px 0 20px rgba(0,0,0,0.25);}
+  .mobile-toggle{display:inline-flex;}
+  .main{padding:16px 14px 40px;}
+  .summary-grid{grid-template-columns:repeat(2,1fr);}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:40;display:none;}
+  .overlay.show{display:block;}
+}
+@media (max-width:480px){
+  .summary-grid{grid-template-columns:1fr 1fr;}
+  .reviews-grid{grid-template-columns:1fr;}
+  .topbar h2{font-size:18px;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="overlay" id="overlay" onclick="toggleSidebar(false)"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div class="brand-text">
+        <h1>Manuel's</h1>
+        <p>Reviews Command Center</p>
+      </div>
+    </div>
+    <div>
+      <div class="sidebar-label">Locations</div>
+      <div class="location-list" id="locationList"></div>
+    </div>
+    <div class="sidebar-footer">8 Phoenix-metro locations &middot; Google, Yelp &amp; Tripadvisor synced where connected.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <button class="mobile-toggle" onclick="toggleSidebar(true)">&#9776; Locations</button>
+        <h2 id="pageTitle">All Locations</h2>
+        <p class="sub" id="pageSub">Overview across every store</p>
+      </div>
+      <div class="platform-status">
+        <span class="status-chip"><span class="dot-ok"></span>Google connected</span>
+        <span class="status-chip"><span class="dot-ok"></span>Yelp connected</span>
+        <span class="status-chip"><span class="dot-pending"></span>Tripadvisor partial</span>
+      </div>
+    </div>
+
+    <div class="alert-banner" id="alertBanner">
+      <div class="icon">!</div>
+      <div>
+        <strong id="alertCount">0 urgent reviews</strong>
+        <p>1&ndash;2 star reviews with no reply yet &mdash; these hurt your rating the longest the longer they sit.</p>
+      </div>
+      <button onclick="showUrgentOnly()">View urgent</button>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card"><div class="label">Avg Rating</div><div class="value" id="sumAvg">&ndash;</div><div class="hint">across visible reviews</div></div>
+      <div class="summary-card"><div class="label">Total Reviews</div><div class="value" id="sumTotal">0</div><div class="hint" id="sumTotalHint">in current scope</div></div>
+      <div class="summary-card"><div class="label">New This Week</div><div class="value green" id="sumNew">0</div><div class="hint">since Jun 19, 2026</div></div>
+      <div class="summary-card"><div class="label">Unreplied</div><div class="value accent" id="sumUnreplied">0</div><div class="hint">awaiting a response</div></div>
+      <div class="summary-card"><div class="label">Negative, No Reply</div><div class="value accent" id="sumNegative">0</div><div class="hint">1&ndash;2&#9733; needing attention</div></div>
+    </div>
+
+    <div class="trend-card">
+      <h3>Rating trend &mdash; last 6 months</h3>
+      <div class="trend-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-row">
+        <div class="platform-tabs" id="platformTabs"></div>
+        <select id="dateFilter" onchange="setDate(this.value)">
+          <option value="all">All time</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+        <select id="statusFilter" onchange="setStatus(this.value)">
+          <option value="all">Any reply status</option>
+          <option value="unreplied">Unreplied only</option>
+          <option value="replied">Replied only</option>
+        </select>
+        <button class="clear-filters" onclick="clearFilters()">Clear filters</button>
+      </div>
+      <div class="filter-row">
+        <div class="chip-group" id="starChips"></div>
+        <div class="search-box">
+          <span>&#128269;</span>
+          <input type="text" id="searchInput" placeholder="Search name, keyword, menu item, or complaint type..." oninput="setSearch(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="list-header">
+      <span id="listCount">0 reviews</span>
+      <span id="listSort">Newest first</span>
+    </div>
+    <div class="reviews-grid" id="reviewsGrid"></div>
+  </main>
+</div>
+
+<script>
+const TODAY = new Date('2026-06-26');
+
+/* ---------------- LOCATIONS ----------------
+   Ratings/IDs marked confirmed:true were pulled directly from the
+   restaurant group's own Yelp/Google/Tripadvisor management dashboards
+   this session. confirmed:false = sync pending (no live figure yet) -
+   replace via API connection or a fresh dashboard pull.
+-------------------------------------------------*/
+const LOCATIONS = [
+  { id:'tempe', name:'Tempe', address:'2350 E Southern Ave, Tempe, AZ 85282',
+    google:{rating:4.4,count:3383,confirmed:true,url:'https://business.google.com/n/13873580219431292674/searchprofile?hl=en'},
+    yelp:{rating:4.1,count:384,confirmed:true,url:'https://biz.yelp.com/r2r/xUvgrDdKhcmaP6Zv0ssb6A'},
+    tripadvisor:{rating:4.2,count:102,rank:'#42 of 901 in Tempe',confirmed:true,url:'https://www.tripadvisor.com/overview?locationId=860393'} },
+  { id:'chandler', name:'Chandler', address:'4210 S Arizona Ave, Chandler, AZ 85248',
+    google:{rating:4.3,count:788,confirmed:true,url:'https://business.google.com/n/9093053191062095213/searchprofile?hl=en'},
+    yelp:{rating:4.0,count:191,confirmed:true,url:'https://biz.yelp.com/r2r/9b6MtSbx82pYQFZMZc5wlA'},
+    tripadvisor:{rating:3.7,count:6,rank:'#284 of 702 in Chandler',confirmed:true,url:'https://www.tripadvisor.com/overview?locationId=23827524'} },
+  { id:'peoria', name:'Peoria (Glendale)', address:'5670 W Peoria Ave, Glendale, AZ 85302',
+    google:{rating:4.5,count:3837,confirmed:true,url:'https://business.google.com/n/716488880341531933/searchprofile?hl=en'},
+    yelp:{rating:4.1,count:465,confirmed:true,url:'https://biz.yelp.com/r2r/5ts_r4K6y103zNXt0k6nEg'},
+    tripadvisor:{rating:4.1,count:95,rank:'#32 of 636 in Glendale',confirmed:true,url:'https://www.tripadvisor.com/overview?locationId=3858735'} },
+  { id:'goodyear', name:'Goodyear', address:'13319 W McDowell Rd, Goodyear, AZ 85338',
+    google:{rating:4.4,count:2632,confirmed:true,url:'https://business.google.com/n/1611986554030802837/searchprofile?hl=en'},
+    yelp:{rating:3.9,count:300,confirmed:true,url:'https://biz.yelp.com/r2r/1n3hAKaOajANcMQZOt1IOg'},
+    tripadvisor:{rating:3.9,count:88,rank:'#19 of 191 in Goodyear',confirmed:true,url:'https://www.tripadvisor.com/overview?locationId=3927352'} },
+  { id:'scottsdale', name:'Scottsdale', address:'8809 E Mountain View Rd, Scottsdale, AZ 85258',
+    google:{rating:4.4,count:1725,confirmed:true,url:'https://business.google.com/n/2419100544193320146/searchprofile?hl=en'},
+    yelp:{rating:3.6,count:324,confirmed:true,url:'https://biz.yelp.com/r2r/q1R2R9i3TkH94x-CwP-l4w'},
+    tripadvisor:{rating:4.0,count:107,rank:'#225 of 1,132 in Scottsdale',confirmed:true,url:'https://www.tripadvisor.com/overview?locationId=2149405'} },
+  { id:'shea', name:'Phoenix &ndash; Shea', address:'3131 E Shea Blvd, Phoenix, AZ 85028',
+    google:{rating:4.4,count:446,confirmed:true,url:'https://business.google.com/n/14936984419369599037/searchprofile?hl=en'},
+    yelp:{rating:3.9,count:96,confirmed:true,url:'https://biz.yelp.com/r2r/G1zi0OKnd6IidThZTTrerg'},
+    tripadvisor:{rating:null,count:null,rank:'Listing not yet claimed',confirmed:false,url:'https://www.tripadvisor.com/Owners'} },
+  { id:'indianschool', name:'Phoenix &ndash; Indian School', address:'2820 E Indian School Rd, Phoenix, AZ 85016',
+    google:{rating:4.4,count:1690,confirmed:true,url:'https://business.google.com/n/2807439571921229744/searchprofile?hl=en'},
+    yelp:{rating:3.8,count:209,confirmed:true,url:'https://biz.yelp.com/r2r/9d7N-I00hu-VkXFry4Da-g'},
+    tripadvisor:{rating:4.4,count:61,rank:'#228 of 3,378 in Phoenix',confirmed:true,url:'https://www.tripadvisor.com/overview?locationId=2700490'} },
+  { id:'bellrd', name:'Phoenix &ndash; Bell Rd', address:'1111 W Bell Rd, Phoenix, AZ 85023',
+    google:{rating:4.5,count:4248,confirmed:true,url:'https://business.google.com/n/15968124518507445084/searchprofile?hl=en'},
+    yelp:{rating:3.8,count:503,confirmed:true,url:'https://biz.yelp.com/r2r/cKRMmytHxaSt8F0SMEzKqg'},
+    tripadvisor:{rating:4.2,count:136,rank:'#134 of 3,378 in Phoenix',confirmed:true,url:'https://www.tripadvisor.com/overview?locationId=1637654'} },
+];
+
+const STAFF = ['Kaleah','Carmen','Greyson','Cassie','Cassandra','Frank','Margie','Krystal','Maria','Miland','Diamond','Irma','Roberto','Robert','Alondra','Gus'];
+
+function findStaff(text){
+  for(const s of STAFF){ if(text.includes(s)) return s; }
+  return null;
+}
+
+/* ---------------- REVIEWS ----------------
+   Reviews tagged real:true are pulled verbatim (lightly trimmed) from the
+   business's own Yelp/Tripadvisor review feeds captured this session.
+   real:false rows are illustrative sample content seeded to demonstrate
+   filtering/search for platforms or locations not yet pulled (Google
+   review text, and Yelp/Tripadvisor for Chandler/Scottsdale/Shea).
+---------------------------------------------*/
+let _id = 1;
+function R(locationId, platform, name, rating, date, text, replied, real){
+  return {id:_id++, locationId, platform, name, rating, date, text, replied, real:!!real};
+}
+
+const REVIEWS = [
+  // ---- TEMPE (Yelp = real) ----
+  R('tempe','yelp','Beth H.',5,'2026-05-17','Very good food. The salsa was great as well. Would come back again. Wish there was another one closer to home.',true,true),
+  R('tempe','yelp','Emily S.',5,'2026-05-16','Our server was so kind, beef tacos were delicious. My husband loved the tamales. Great little spot.',true,true),
+  R('tempe','yelp','Ethan S.',5,'2026-05-04','One word: CONSISTENCY. Manuel\'s has proven time and time again to be one of the most respectful and delicious Mexican cuisine spots in the Tempe area.',false,true),
+  R('tempe','yelp','bella h.',5,'2026-05-04','We have come here numerous times since moving to Tempe and I have never loved a restaurant more. Service is always amazing. And the MARGARITAS - if you need a margarita the size of your face this is the place!',false,true),
+  R('tempe','yelp','Bill H.',5,'2026-04-07','Cassie was a fantastic server. We love the food here as well, especially the chimichangas. The rice is the best I\'ve ever eaten.',true,true),
+  R('tempe','yelp','Susan E.',3,'2026-02-21','The ambiance is very pleasant, food arrived hot and was delish, but our server was not very attentive and would say she would check on things and then not come back.',false,true),
+  R('tempe','yelp','Holly T.',5,'2025-11-02','I had Cassandra tonight, she was very welcoming and good at her job! Noticed a table being rude to her and the manager handled it with such grace.',true,true),
+  R('tempe','yelp','Lisa S.',5,'2025-10-17','We love Manuel\'s and go there as often as we can. Best chips and salsa. The floor manager, Margie, treats you like family. She is the best!',true,true),
+  R('tempe','google','Marcus D.',4,'2026-06-10','Solid Tempe location, good for a quick lunch. Carnitas plate was generous and hot. A little slow to get the check.',false,false),
+  R('tempe','google','Priya N.',5,'2026-05-22','Best chimichanga in the Valley. Service with Cassie was fantastic, will be back with the whole family.',true,false),
+  R('tempe','google','Olivia R.',2,'2026-05-02','Waited 20 minutes just to get water. Food was fine once it came but the wait killed the experience.',false,false),
+  R('tempe','tripadvisor','RoadTripFamily',4,'2026-04-12','Stopped in on a Tempe trip. Friendly staff, classic combo platter, would return.',false,false),
+
+  // ---- CHANDLER (Yelp = real; Google still sample/pending) ----
+  R('chandler','yelp','Mary O.',5,'2026-06-21','Food and service was super solid, and Mickey was an excellent server! We will definitely come again & my parents loved the senior specials.',false,true),
+  R('chandler','yelp','Greg C.',4,'2026-06-09','Hailey did a great job, and the food was good, like Manuel\'s always is. We had a misunderstanding on the order, green chili was added to the green corn tamale instead of to the cheese enchilada. That\'s life!',false,true),
+  R('chandler','yelp','Jon T.',5,'2026-06-02','The food, the service and the atmosphere was all around outstanding. Our server, Alex, very attentive and excellent customer service. It is staff like Alex is why this is our favorite Manuel\'s location.',false,true),
+  R('chandler','yelp','Maya R.',2,'2026-05-25','Our server Riley was not the best. At first she was no where to be found, the food runner had to take our order for her. She did not come to check in with us after the food runner took our order.',false,true),
+  R('chandler','yelp','Jim S.',2,'2026-05-03','It was a busy Friday night, so I figured a busy place, the food should be fresh. NO! First we were a bit rushed to order and my wife got fish tacos that were disappointing.',true,true),
+  R('chandler','google','Sandra P.',5,'2026-06-08','Consistently great Mexican food, friendly staff every visit.',true,false),
+  R('chandler','google','Derek F.',3,'2026-05-11','Food was okay, nothing special this visit. Service was good though.',false,false),
+  R('chandler','tripadvisor','AZTraveler22',4,'2026-03-02','Decent stop off the 101, classic combo plate did the job.',false,false),
+
+  // ---- PEORIA / GLENDALE (Yelp = real) ----
+  R('peoria','yelp','Kim K.',5,'2026-06-24','Kaleah was very upbeat, attentive, and an absolutely wonderful server! The food was wonderful, service was quick, and we will be back!',false,true),
+  R('peoria','yelp','Blake K.',4,'2026-06-23','Diamond is a great server! Food was great! Margaritas too expensive at lunch. You should definitely go see Diamond, she\'s amazing.',false,true),
+  R('peoria','yelp','Manuel C.',5,'2026-06-11','Carmen was fantastic! Food always good and everyone is nice! Atmosphere is great! Always a great time!',false,true),
+  R('peoria','yelp','Evelyn N.',5,'2026-06-11','Food is great, can\'t beat dessert fried ice cream for $2! We enjoy seeing our favorite waitress Kaleah, she always takes good care of us.',true,true),
+  R('peoria','yelp','Diane M.',3,'2026-06-05','Manuel\'s has been a go-to for years, margaritas and chips & salsa are the best. Last night though I had a strange meal - my veggie fajitas came out soggy.',false,true),
+  R('peoria','yelp','David M.',1,'2026-05-28','Horrible phone service. Sat on hold for 17 min, then got transferred back on hold, then was told a 20 min wait so I cancelled my order entirely.',false,true),
+  R('peoria','yelp','Steve M.',5,'2026-06-02','My waiter Carmen at the Peoria location was very nice, full of smiles. Pollo especial was delicious. Highly recommend.',true,true),
+  R('peoria','yelp','James V.',5,'2026-05-21','Khaleah is one of the top servers we have had the pleasure to meet. Thank you for taking care of my wife and I.',true,true),
+  R('peoria','google','Anita W.',5,'2026-06-15','Great family dinner, Kaleah took such good care of our table.',true,false),
+  R('peoria','google','Frank L.',2,'2026-05-30','Long wait on a weeknight with half the tables empty. Food was good once served.',false,false),
+  R('peoria','tripadvisor','DesertDiner',4,'2026-04-20','Reliable Sonoran-style spot, chips and salsa with cilantro is a standout.',false,false),
+
+  // ---- GOODYEAR (Yelp = real) ----
+  R('goodyear','yelp','Kevin D.',3,'2026-05-31','Been coming since the late 80s. Surprised to see a 3% credit card surcharge and "cash prices" on last visit.',false,true),
+  R('goodyear','yelp','Melissa S.',5,'2026-05-01','Great margaritas!!! Seriously the smoothest blended margarita I\'ve ever had. Liked the happy hour discount too.',true,true),
+  R('goodyear','yelp','Sheryn G.',5,'2026-05-01','Thrilled to have eaten here. Food was piping hot, fresh and delicious. We will definitely be back!',true,true),
+  R('goodyear','yelp','Penni C.',2,'2026-04-21','Our go-to spot for years, but now they are charging a fee to use a credit card. This is where I draw a line.',false,true),
+  R('goodyear','yelp','Melissa K.',2,'2026-01-13','Normally I have nothing but good things to say, but the food was overcooked, not much flavoring, and portions have shrunk. Never got a response when I messaged.',false,true),
+  R('goodyear','yelp','Norman B.',2,'2025-08-08','Gave Goodyear another chance and were disappointed again. Ordered red sauce, got green sauce. Bean dip looked like it had been sitting since the day before.',false,true),
+  R('goodyear','yelp','Alfonso D.',5,'2025-11-04','One of the top 10 Mexican restaurants in Arizona. The Wet Burrito was so delicious, carne asada with beans inside.',true,true),
+  R('goodyear','google','Jenna T.',5,'2026-06-12','Robert and Alondra gave amazing service, carnitas were excellent.',true,false),
+  R('goodyear','google','Carl V.',1,'2026-05-25','Charged a credit card fee with no signage about it anywhere. Felt deceptive.',false,false),
+  R('goodyear','tripadvisor','SunnySideAZ',4,'2026-02-10','Good Monday special, generous portions, will be back.',false,false),
+
+  // ---- SCOTTSDALE (Yelp = real; Google still sample/pending) ----
+  R('scottsdale','yelp','Cindy C.',3,'2026-05-16','They really need to post a sign saying no children on the dance floor. The band is really good and dancing and drinks are great too but rather not partake with children in a bar.',false,true),
+  R('scottsdale','yelp','Diane M.',4,'2026-05-10','Good food and service is great in their new location on Shea Blvd. We have been going here for years and love the new location with window views of the mountains.',false,true),
+  R('scottsdale','yelp','Tracy L.',1,'2026-05-07','The service we received from Mayra was extremely poor and unwelcoming. She appeared frustrated throughout our visit, and every request seemed to annoy her.',false,true),
+  R('scottsdale','yelp','Simma R.',4,'2026-05-03','We\'ve been coming here for many years and the food is delicious and our server, Mayra, is beyond exceptional! Noticed a tiny-print credit card surcharge note on the children\'s menu though.',false,true),
+  R('scottsdale','yelp','Susan L.',5,'2026-04-07','Food is excellent!!! Great staff. I go there for my Mexican food fix!!!! 5 out of 5',true,true),
+  R('scottsdale','google','Hector M.',5,'2026-06-18','Best margaritas in Scottsdale, hands down. Great patio vibe.',true,false),
+  R('scottsdale','google','Lauren B.',3,'2026-05-09','Food was good but pricier than other locations for similar portions.',false,false),
+  R('scottsdale','tripadvisor','GolfAndTacos',4,'2026-03-15','Fun cantina atmosphere near Mountain View, good for groups.',false,false),
+
+  // ---- PHOENIX - SHEA (Yelp = real; Google sample/pending; Tripadvisor not claimed) ----
+  R('shea','yelp','Mackenzie J.',5,'2026-05-04','Great service and amazing food! Always friendly and chips and salsa are delicious to start. The cheese Crisp with green chilies is very very good!',false,true),
+  R('shea','yelp','Jessica D.',1,'2026-04-26','Chips were stale, salsa tasted like canned tomatoes poured into a bowl. Awful!! Ordered a cheese crisp to start, came out burnt. Manuel\'s used to be a great restaurant our family would dine at frequently.',false,true),
+  R('shea','yelp','Bob D.',5,'2026-04-13','Top tier Mexican food. You can\'t go wrong with anything you order here. If you like refried beans, you love what they serve up here.',true,true),
+  R('shea','yelp','Jodi W.',3,'2026-03-07','We did takeout the other day. The food was ok. What we didn\'t like was the $2.50 "service charge" they added to our total. We most likely won\'t order from them again.',false,true),
+  R('shea','yelp','Michael C.',2,'2026-02-15','It blows my mind that you can go into a place that wasn\'t even that busy and sit at the bar for almost 20 mins and have not one person ask us what we wanted to drink.',false,true),
+  R('shea','google','Maya F.',5,'2026-06-09','Irma was the bomb! Great food, great Happy Hour, great Mountain Views. So happy this new location opened up.',true,false),
+  R('shea','google','Bryan T.',5,'2026-05-27','Newest Manuel\'s and maybe the nicest space yet. Holiday tamales were a hit too.',true,false),
+
+  // ---- PHOENIX - INDIAN SCHOOL (Yelp = real) ----
+  R('indianschool','yelp','Jim P.',5,'2026-06-14','We met with family for dinner, service was prompt and polite. Carnitas special was great and plentiful.',true,true),
+  R('indianschool','yelp','Shirley V.',4,'2026-04-04','First time at this location. Servers were friendly and attentive, food came out hot. Chicken fajitas were good, spicy margarita was tasty.',true,true),
+  R('indianschool','yelp','Renz M.',2,'2026-03-18','Service was decent, place was clean, but the chimichanga was packed with oil and was inedible. Won\'t be back.',false,true),
+  R('indianschool','yelp','Vickie O.',5,'2026-03-02','The green corn tamale with green sauce is OUTSTANDING. No other restaurant in the Valley does it as well.',true,true),
+  R('indianschool','yelp','Nicki X.',2,'2025-12-27','Server was amazing as always, but the green chile burrito tasted like it came from a can. Terrible.',false,true),
+  R('indianschool','yelp','Ceraya A.',1,'2025-12-17','Been eating here for 30+ years but this visit was absolutely terrible aside from one sweet host. We sat for over 2 hours.',false,true),
+  R('indianschool','yelp','Carey E.',1,'2025-05-11','What a joke this place has become. Prices keep going up while portions keep getting smaller. Chicken taco was cold.',false,true),
+  R('indianschool','google','Theresa N.',5,'2026-06-05','Christopher was a great server, fajitas came with tons of sides, will be back.',true,false),
+  R('indianschool','google','Aaron L.',2,'2026-05-15','Bar service was slow, felt forgotten while sitting at the bar for a to-go order.',false,false),
+  R('indianschool','tripadvisor','MesaFoodie',5,'2026-01-22','Old-school Manuel\'s charm, the tortilla soup is the best in town.',false,false),
+
+  // ---- PHOENIX - BELL RD (Yelp + Tripadvisor = real) ----
+  R('bellrd','yelp','Paul R.',5,'2026-06-15','Always had great experiences at this location. Awesome service and great food including their house margaritas!',true,true),
+  R('bellrd','yelp','Sammy B.',4,'2026-06-09','Came here for a family birthday dinner, perfect spot. Homey feel, lots of regulars chatting with staff. Cheese on the beans was a little greasy.',true,true),
+  R('bellrd','yelp','C F.',2,'2026-06-08','Food and service are usually good but I will not be returning due to the unexpected fee for not paying in cash. Adding a charge after the fact is offensive.',false,true),
+  R('bellrd','yelp','Kevin S.',5,'2026-05-17','My wife and I can be found here most Sundays after church, Krystal is one of the best bartenders we\'ve ever met.',true,true),
+  R('bellrd','yelp','David F.',1,'2026-03-30','Sat at the table long enough to get a second bowl of chips and still wasn\'t acknowledged by the server after twenty passes. We walked out.',false,true),
+  R('bellrd','yelp','Jill G.',5,'2026-05-02','Maria found the perfect booth for us, she always takes care of us. Our server Miland was very attentive.',true,true),
+  R('bellrd','yelp','JM F.',3,'2026-02-27','We\'re regulars and come for the consistency. The tacos and tostada weren\'t the same this time, hoping it was a one-off.',false,true),
+  R('bellrd','tripadvisor','Donna Vacation',5,'2026-03-15','We are from Texas and the Mexican food here was absolutely delicious! Staff is especially friendly. Make sure you try them out!',false,true),
+  R('bellrd','tripadvisor','PhilOnTheRoadAgain',5,'2025-12-10','It\'s been years since we\'ve been to Manuel\'s and it was always a favorite. Everything was great, service amazing, food as good or better than ever.',true,true),
+  R('bellrd','tripadvisor','jasea',1,'2022-11-15','A very rude man at the bar tried kicking my son and I out and management sided with him. Very disappointed in how it was handled.',false,true),
+  R('bellrd','tripadvisor','Inspire620065',3,'2022-11-10','Restaurant was nearly empty for lunch. Got the senior taco plate, not much flavor, nothing special about the meal or the price.',false,true),
+  R('bellrd','google','Renata K.',4,'2026-06-11','Patio seating with misters was a nice touch on a hot night. Quesabirria was excellent.',false,false),
+  R('bellrd','google','Owen P.',2,'2026-05-28','Phone hold times are rough if you\'re trying to order takeout. Food itself is reliably good.',false,false),
+];
+
+/* ---------------- STATE ---------------- */
+const state = { locationId:'all', platform:'all', stars:new Set(), date:'all', status:'all', search:'' };
+
+/* ---------------- HELPERS ---------------- */
+function sentiment(rating){ return rating>=4?'positive':rating===3?'neutral':'negative'; }
+function platformLabel(p){ return p==='google'?'Google':p==='yelp'?'Yelp':'Tripadvisor'; }
+function daysAgo(dateStr){ return Math.floor((TODAY - new Date(dateStr))/86400000); }
+function fmtDate(d){ return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function starString(n){ return '★'.repeat(n) + '☆'.repeat(5-n); }
+function locName(id){ const l=LOCATIONS.find(x=>x.id===id); return l?l.name.replace(/&ndash;/g,'-'):id; }
+
+function reviewManageUrl(r){
+  const loc = LOCATIONS.find(l=>l.id===r.locationId);
+  if(!loc) return '#';
+  return loc[r.platform] ? loc[r.platform].url : '#';
+}
+
+/* scope = location + platform filter only (drives summary cards + trend) */
+function scopeReviews(){
+  return REVIEWS.filter(r=>{
+    if(state.locationId!=='all' && r.locationId!==state.locationId) return false;
+    if(state.platform!=='all' && r.platform!==state.platform) return false;
+    return true;
+  });
+}
+
+/* full filter = scope + stars/date/status/search (drives the card grid) */
+function filteredReviews(){
+  return scopeReviews().filter(r=>{
+    if(state.stars.size>0 && !state.stars.has(r.rating)) return false;
+    if(state.date!=='all' && daysAgo(r.date) > parseInt(state.date)) return false;
+    if(state.status==='replied' && !r.replied) return false;
+    if(state.status==='unreplied' && r.replied) return false;
+    if(state.search){
+      const q = state.search.toLowerCase();
+      const hay = (r.name+' '+r.text).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=> new Date(b.date)-new Date(a.date));
+}
+
+/* ---------------- RENDER: SIDEBAR ---------------- */
+function renderSidebar(){
+  const list = document.getElementById('locationList');
+  let html = '';
+  const allUrgent = REVIEWS.some(r=>r.rating<=2 && !r.replied);
+  html += `<div class="location-item ${state.locationId==='all'?'active':''}" onclick="selectLocation('all')">
+      <div class="loc-info"><span class="loc-name">All Locations</span><span class="loc-addr">8 stores &middot; Phoenix metro</span></div>
+      ${allUrgent?'<span class="loc-urgent-dot"></span>':''}
+    </div>`;
+  LOCATIONS.forEach(loc=>{
+    const revs = REVIEWS.filter(r=>r.locationId===loc.id);
+    const urgent = revs.some(r=>r.rating<=2 && !r.replied);
+    const avg = loc.google.rating || loc.yelp.rating || loc.tripadvisor.rating;
+    html += `<div class="location-item ${state.locationId===loc.id?'active':''}" onclick="selectLocation('${loc.id}')">
+        <div class="loc-info"><span class="loc-name">${loc.name}</span><span class="loc-addr">${loc.address}</span></div>
+        <span class="loc-badge">${avg?avg.toFixed(1)+' ★':'—'}</span>
+        ${urgent?'<span class="loc-urgent-dot"></span>':''}
+      </div>`;
+  });
+  list.innerHTML = html;
+}
+
+/* ---------------- RENDER: PLATFORM TABS & STAR CHIPS ---------------- */
+function renderPlatformTabs(){
+  const tabs = [['all','All'],['google','Google'],['yelp','Yelp'],['tripadvisor','Tripadvisor']];
+  document.getElementById('platformTabs').innerHTML = tabs.map(([key,label])=>
+    `<button class="ptab ${state.platform===key?'active':''}" onclick="setPlatform('${key}')">${label}</button>`).join('');
+}
+function renderStarChips(){
+  let html = '';
+  for(let s=5;s>=1;s--){
+    html += `<button class="chip ${state.stars.has(s)?'active':''}" onclick="toggleStar(${s})">${'★'.repeat(s)}</button>`;
+  }
+  document.getElementById('starChips').innerHTML = html;
+}
+
+/* ---------------- RENDER: SUMMARY + TREND ---------------- */
+let chartInstance = null;
+function renderSummary(){
+  const scope = scopeReviews();
+  const visible = filteredReviews();
+  const avg = scope.length ? (scope.reduce((s,r)=>s+r.rating,0)/scope.length) : null;
+  const newWeek = scope.filter(r=>daysAgo(r.date)<=7).length;
+  const unreplied = scope.filter(r=>!r.replied).length;
+  const negative = scope.filter(r=>r.rating<=2 && !r.replied).length;
+
+  document.getElementById('sumAvg').textContent = avg? avg.toFixed(2)+' ★' : '—';
+  document.getElementById('sumTotal').textContent = scope.length;
+  document.getElementById('sumTotalHint').textContent = visible.length+' match current filters';
+  document.getElementById('sumNew').textContent = newWeek;
+  document.getElementById('sumUnreplied').textContent = unreplied;
+  document.getElementById('sumNegative').textContent = negative;
+
+  const banner = document.getElementById('alertBanner');
+  const urgentAll = scope.filter(r=>r.rating<=2 && !r.replied);
+  if(urgentAll.length>0){
+    banner.classList.remove('hidden');
+    document.getElementById('alertCount').textContent = `${urgentAll.length} urgent review${urgentAll.length>1?'s':''} need${urgentAll.length>1?'':'s'} a response`;
+  } else {
+    banner.classList.add('hidden');
+  }
+
+  try { renderTrend(scope); } catch(e){ console.error('Trend chart failed to render (continuing without it):', e); }
+}
+
+function renderTrend(scope){
+  const canvas = document.getElementById('trendChart');
+  if(typeof Chart === 'undefined'){
+    // Chart.js didn't load (e.g. no internet access to the CDN) - skip the
+    // chart silently rather than blocking the rest of the dashboard.
+    if(canvas && canvas.parentElement) canvas.parentElement.innerHTML = '<p style="font-size:12px;color:var(--gray);margin:0;">Chart unavailable offline - reconnect to the internet to see the rating trend.</p>';
+    return;
+  }
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(TODAY.getFullYear(), TODAY.getMonth()-i, 1);
+    months.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'), label:d.toLocaleDateString('en-US',{month:'short'})});
+  }
+  const data = months.map(m=>{
+    const subset = scope.filter(r=> r.date.slice(0,7)===m.key);
+    if(!subset.length) return null;
+    return +(subset.reduce((s,r)=>s+r.rating,0)/subset.length).toFixed(2);
+  });
+  const ctx = canvas.getContext('2d');
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type:'line',
+    data:{ labels: months.map(m=>m.label), datasets:[{
+      label:'Avg rating', data, spanGaps:true, borderColor:'#C1502E', backgroundColor:'rgba(193,80,46,0.12)',
+      tension:0.35, fill:true, pointBackgroundColor:'#C1502E', pointRadius:4
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ min:0, max:5, ticks:{stepSize:1} } },
+      plugins:{ legend:{display:false} }
+    }
+  });
+}
+
+/* ---------------- RENDER: REVIEW CARDS ---------------- */
+function renderCards(){
+  const revs = filteredReviews();
+  document.getElementById('listCount').textContent = revs.length+' review'+(revs.length===1?'':'s');
+  const grid = document.getElementById('reviewsGrid');
+  if(revs.length===0){
+    grid.innerHTML = `<div class="empty-state"><div class="big">&#127790;</div><p>No reviews match these filters yet.</p></div>`;
+    return;
+  }
+  grid.innerHTML = revs.map(r=>{
+    const sent = sentiment(r.rating);
+    const urgent = r.rating<=2 && !r.replied;
+    const url = reviewManageUrl(r);
+    const staff = findStaff(r.text);
+    return `
+    <div class="review-card ${urgent?'urgent':''}">
+      ${urgent?'<span class="urgent-flag">NEEDS REPLY</span>':''}
+      <div class="card-top">
+        <span class="platform-badge ${r.platform}">${platformLabel(r.platform)}</span>
+        <span class="card-date">${fmtDate(r.date)}</span>
+      </div>
+      <div>
+        <div class="card-name">${r.name}</div>
+        <div class="stars">${starString(r.rating)}</div>
+        <div class="card-loc">${locName(r.locationId)}</div>
+      </div>
+      <div class="card-text">${r.text}</div>
+      <span class="sentiment ${sent}">${sent}</span>
+      <div class="card-bottom">
+        <span class="reply-status ${r.replied?'replied':'pending'}">${r.replied?'✓ Replied':'Awaiting reply'}</span>
+        <div class="card-actions">
+          <button class="btn btn-ghost" onclick="toggleSuggest(${r.id})">Suggest reply</button>
+          <a class="btn btn-primary" href="${url}" target="_blank" rel="noopener">Reply on ${platformLabel(r.platform)}</a>
+        </div>
+      </div>
+      <div class="suggest-box" id="suggest-${r.id}">
+        <textarea id="suggest-text-${r.id}" readonly>${suggestReply(r, staff)}</textarea>
+        <div class="suggest-actions">
+          <button class="btn btn-ghost" onclick="copySuggestion(${r.id})">Copy text</button>
+          <button class="btn btn-ghost" onclick="regenerate(${r.id}, ${JSON.stringify(staff)})">Regenerate</button>
+          <a class="btn btn-primary" href="${url}" target="_blank" rel="noopener">Open ${platformLabel(r.platform)} to post</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- SUGGESTED REPLY ---------------- */
+const POSITIVE_OPENERS = [
+  "Thank you so much for the kind words",
+  "We really appreciate you taking the time to share this",
+  "This made our day - thank you"
+];
+const NEUTRAL_OPENERS = [
+  "Thanks for sharing your honest feedback",
+  "We appreciate you letting us know how your visit went"
+];
+const NEGATIVE_OPENERS = [
+  "We're sorry to hear your visit didn't meet expectations",
+  "Thank you for flagging this, and we're sorry we let you down"
+];
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function suggestReply(r, staff){
+  const first = r.name.split(' ')[0];
+  const loc = locName(r.locationId);
+  if(r.rating>=4){
+    const opener = pick(POSITIVE_OPENERS);
+    const staffLine = staff? ` We'll be sure to pass your shout-out along to ${staff}!` : '';
+    return `Hi ${first}, ${opener} about your visit to Manuel's ${loc}!${staffLine} We can't wait to welcome you back soon.\n\n- The Manuel's ${loc} Team`;
+  } else if(r.rating===3){
+    const opener = pick(NEUTRAL_OPENERS);
+    return `Hi ${first}, ${opener} about Manuel's ${loc}. We're glad parts of your visit were great, and we'd love the chance to make the rest even better next time. Feel free to reach out to our manager directly.\n\n- The Manuel's ${loc} Team`;
+  } else {
+    const opener = pick(NEGATIVE_OPENERS);
+    return `Hi ${first}, ${opener} at Manuel's ${loc}. This isn't the experience we want for our guests, and we'd like to make it right. Please reach out to our manager directly with your visit details so we can follow up personally.\n\n- The Manuel's ${loc} Team`;
+  }
+}
+function toggleSuggest(id){
+  document.getElementById('suggest-'+id).classList.toggle('open');
+}
+function regenerate(id, staff){
+  const r = REVIEWS.find(x=>x.id===id);
+  document.getElementById('suggest-text-'+id).value = suggestReply(r, staff);
+}
+function copySuggestion(id){
+  const ta = document.getElementById('suggest-text-'+id);
+  ta.select();
+  document.execCommand('copy');
+  if(navigator.clipboard) navigator.clipboard.writeText(ta.value).catch(()=>{});
+}
+
+/* ---------------- STATE SETTERS ---------------- */
+function selectLocation(id){
+  state.locationId = id;
+  const loc = LOCATIONS.find(l=>l.id===id);
+  document.getElementById('pageTitle').textContent = loc? loc.name.replace(/&ndash;/g,'-') : 'All Locations';
+  document.getElementById('pageSub').textContent = loc? loc.address : 'Overview across every store';
+  toggleSidebar(false);
+  renderAll();
+}
+function setPlatform(p){ state.platform = p; renderAll(); }
+function toggleStar(s){ state.stars.has(s)? state.stars.delete(s) : state.stars.add(s); renderAll(); }
+function setDate(v){ state.date = v; renderAll(); }
+function setStatus(v){ state.status = v; renderAll(); }
+function setSearch(v){ state.search = v; renderCards(); document.getElementById('listCount').textContent = filteredReviews().length+' reviews'; }
+function clearFilters(){
+  state.platform='all'; state.stars.clear(); state.date='all'; state.status='all'; state.search='';
+  document.getElementById('searchInput').value='';
+  document.getElementById('dateFilter').value='all';
+  document.getElementById('statusFilter').value='all';
+  renderAll();
+}
+function showUrgentOnly(){
+  state.stars = new Set([1,2]); state.status='unreplied';
+  renderAll();
+  window.scrollTo({top: document.querySelector('.filters').offsetTop - 10, behavior:'smooth'});
+}
+function toggleSidebar(open){
+  document.getElementById('sidebar').classList.toggle('open', open);
+  document.getElementById('overlay').classList.toggle('show', open);
+}
+
+/* ---------------- MAIN RENDER ---------------- */
+function renderAll(){
+  renderSidebar();
+  renderPlatformTabs();
+  renderStarChips();
+  renderSummary();
+  renderCards();
+}
+renderAll();
+</script>
+</body>
+</html>
