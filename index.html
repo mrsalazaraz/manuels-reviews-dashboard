@@ -261,7 +261,7 @@ select, .search-box input{
 </div>
 
 <script>
-const TODAY = new Date('2026-06-26');
+const TODAY = new Date('2026-07-05');
 
 /* ---------------- LOCATIONS ----------------
    Ratings/IDs marked confirmed:true were pulled directly from the
@@ -1305,6 +1305,19 @@ const REVIEWS = [
   R('peoria','google','Mary Lou Esparza',5,'2025-07-02','I\'m never dissatisfied with their food and service.',false,true),
   R('goodyear','google','Suzanne Hankins',5,'2025-07-01','Very friendly, food is amazing. The masa in the tamales is perfection. Street tacos seasoned so well, condiments are optional. Will happily return!',false,true),
 
+  // ---- NEW GOOGLE REVIEWS (auto-updated 2026-07-05) ----
+  R('chandler','google','Jim McMichael',5,'2026-07-02','It was my fiance first visit, and it was a great visit. She enjoyed the meal and we will be back!',false,true),
+  R('chandler','google','Pete Galvan',4,'2026-07-01','We frequent this restaurant. Particularly love their pork enchiladas, cheese dip and the beef mini-chimichanga appetizer platter. Also, the green iguana(?) margarita and free chips & salsa are yummy!',false,true),
+  R('tempe','google','Kaththea Passaro',5,'2026-07-03','Celebrated my dad\'s 100th birthday here with family and friends. Food was great! Staff was extremely helpful and accommodating. Our server Luis was amazing! Thank you Manuels for helping us share in this great milestone.',false,true),
+  R('goodyear','google','Deanna Ramirez',3,'2026-07-05','I have been coming here for years.  The chips for chips and salsa are not the same. Which was very disappointing. They are thicker and lack authenticity. Beans and rice was okay, definitely not the normal quality. I am just hoping they go back to the authentic chips and the kitchen was having an off day.',false,true),
+  R('shea','google','Brittnay Adkins',2,'2026-07-06','With each visit, I become more frustrated with the food, service, etc. I think the Tex-Mex style entrees are fine but overpriced. The service varies each visit, but was very upset leaving encounter tonight. I called prior to arrival to make sure the Mexico vs England World Cup game was airing. I was by myself and sat at the bar rail, planning on having a margarita or two and to watch the game. A gentlemen brought chips and salsa while I was looking over the menu. Iv often ordered a “side of queso” or smaller version of the Espinosa dip without difficulties. Tonight, the bartender said that wouldn’t be possible. So, since I wasn’t hungry I did not order any food. After the game was over, I cashed out expecting to pay for my two frozen margaritas. Was to my surprise that an additional $8 charge was on my bill for chips and salsa… of which I did not order nor did I eat more than a couple chips. I think this tactic is shady and scamming.  Don’t think I care to return for the mediocre food, hit or miss service, and odd atmosphere. I’ll gladly go across the street to Zipps for a frozen marg or visit the better Mexican in the valley: Taco Guild, Ajo Al’s, and Valle Luna. You missed the mark Manuel’s.',false,true),
+  R('peoria','google','Geneva Wilson',5,'2026-07-04','The menudo was pretty good service was excellent',false,true),
+  R('bellrd','google','Scotty Bishop',5,'2026-07-05','Great food at great prices!',false,true),
+  R('bellrd','google','linda romero',5,'2026-07-04','Our server was great! Very friendly and he made the experience very pleasurable. The food was delicious. We try to go there every time we\'re in Phoenix. Great fajitas!!!',false,true),
+  R('bellrd','google','Melanie Holte',5,'2026-07-04','Staff was friendly and the food was amazing.',false,true),
+  R('bellrd','google','Brian Lorelle',5,'2026-07-03','Excellent food and service! Give Angela a raise!',false,true),
+  R('bellrd','google','Julie Henry',5,'2026-07-03','I moved away from Phoenix 20 years ago and had to come back to Manuel\'s. I was not disappointed. Great service and food.',false,true),
+
 ];
 
 /* ---------------- STATE ---------------- */
@@ -1506,79 +1519,4 @@ const NEUTRAL_OPENERS = [
 ];
 const NEGATIVE_OPENERS = [
   "We're sorry to hear your visit didn't meet expectations",
-  "Thank you for flagging this, and we're sorry we let you down"
-];
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
-function suggestReply(r, staff){
-  const first = r.name.split(' ')[0];
-  const loc = locName(r.locationId);
-  if(r.rating>=4){
-    const opener = pick(POSITIVE_OPENERS);
-    const staffLine = staff? ` We'll be sure to pass your shout-out along to ${staff}!` : '';
-    return `Hi ${first}, ${opener} about your visit to Manuel's ${loc}!${staffLine} We can't wait to welcome you back soon.\n\n- The Manuel's ${loc} Team`;
-  } else if(r.rating===3){
-    const opener = pick(NEUTRAL_OPENERS);
-    return `Hi ${first}, ${opener} about Manuel's ${loc}. We're glad parts of your visit were great, and we'd love the chance to make the rest even better next time. Feel free to reach out to our manager directly.\n\n- The Manuel's ${loc} Team`;
-  } else {
-    const opener = pick(NEGATIVE_OPENERS);
-    return `Hi ${first}, ${opener} at Manuel's ${loc}. This isn't the experience we want for our guests, and we'd like to make it right. Please reach out to our manager directly with your visit details so we can follow up personally.\n\n- The Manuel's ${loc} Team`;
-  }
-}
-function toggleSuggest(id){
-  document.getElementById('suggest-'+id).classList.toggle('open');
-}
-function regenerate(id, staff){
-  const r = REVIEWS.find(x=>x.id===id);
-  document.getElementById('suggest-text-'+id).value = suggestReply(r, staff);
-}
-function copySuggestion(id){
-  const ta = document.getElementById('suggest-text-'+id);
-  ta.select();
-  document.execCommand('copy');
-  if(navigator.clipboard) navigator.clipboard.writeText(ta.value).catch(()=>{});
-}
-
-/* ---------------- STATE SETTERS ---------------- */
-function selectLocation(id){
-  state.locationId = id;
-  const loc = LOCATIONS.find(l=>l.id===id);
-  document.getElementById('pageTitle').textContent = loc? loc.name.replace(/&ndash;/g,'-') : 'All Locations';
-  document.getElementById('pageSub').textContent = loc? loc.address : 'Overview across every store';
-  toggleSidebar(false);
-  renderAll();
-}
-function setPlatform(p){ state.platform = p; renderAll(); }
-function toggleStar(s){ state.stars.has(s)? state.stars.delete(s) : state.stars.add(s); renderAll(); }
-function setDate(v){ state.date = v; renderAll(); }
-function setStatus(v){ state.status = v; renderAll(); }
-function setSearch(v){ state.search = v; renderCards(); document.getElementById('listCount').textContent = filteredReviews().length+' reviews'; }
-function clearFilters(){
-  state.platform='all'; state.stars.clear(); state.date='all'; state.status='all'; state.search='';
-  document.getElementById('searchInput').value='';
-  document.getElementById('dateFilter').value='all';
-  document.getElementById('statusFilter').value='all';
-  renderAll();
-}
-function showUrgentOnly(){
-  state.stars = new Set([1,2]); state.status='unreplied';
-  renderAll();
-  window.scrollTo({top: document.querySelector('.filters').offsetTop - 10, behavior:'smooth'});
-}
-function toggleSidebar(open){
-  document.getElementById('sidebar').classList.toggle('open', open);
-  document.getElementById('overlay').classList.toggle('show', open);
-}
-
-/* ---------------- MAIN RENDER ---------------- */
-function renderAll(){
-  renderSidebar();
-  renderPlatformTabs();
-  renderStarChips();
-  renderSummary();
-  renderCards();
-}
-renderAll();
-</script>
-</body>
-</html>
+  "Thank you for flagging this, and we're
