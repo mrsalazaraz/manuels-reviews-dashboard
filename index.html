@@ -261,7 +261,7 @@ select, .search-box input{
 </div>
 
 <script>
-const TODAY = new Date('2026-07-05');
+const TODAY = new Date('2026-07-13');
 
 /* ---------------- LOCATIONS ----------------
    Ratings/IDs marked confirmed:true were pulled directly from the
@@ -1318,6 +1318,30 @@ const REVIEWS = [
   R('bellrd','google','Brian Lorelle',5,'2026-07-03','Excellent food and service! Give Angela a raise!',false,true),
   R('bellrd','google','Julie Henry',5,'2026-07-03','I moved away from Phoenix 20 years ago and had to come back to Manuel\'s. I was not disappointed. Great service and food.',false,true),
 
+  // ---- NEW GOOGLE REVIEWS (auto-updated 2026-07-13) ----
+  R('chandler','google','KD',2,'2026-07-13','Food was soggy, Mexican puzza',false,true),
+  R('chandler','google','Free Samples',5,'2026-07-12','Manuels is one of the last true and best old school Mexican restaurants. They still make all of their salsas, sauces and food from scratch. In fact from what I was told they have a guy that has worked there for many many years that is in charge of making theirs sauces and certain recipes and they get sent to other locations. That is amazing and that is why the food is consistent they still do things correctly the old fashioned way.',false,true),
+  R('chandler','google','Cora S',1,'2026-07-12','Waited 10 minutes no service.  Walked out',false,true),
+  R('chandler','google','Kevin',5,'2026-07-07','My green burrito place!!!',false,true),
+  R('peoria','google','Diana Bourgeois',5,'2026-07-13','Manuels is a great restaurant. They have excellent food, wonderful atmosphere, the service i gad was above and beyond. I will certainly go again.  5 ***** from me !',false,true),
+  R('peoria','google','John Calderon',4,'2026-07-12','Very good food and great service.  The prices are a little above average.',false,true),
+  R('peoria','google','Ellen Wissinger',5,'2026-07-09','Have ate there numerous times over last 11 or 12 years food and atmosphere is always very comfortable. Great service',false,true),
+  R('bellrd','google','Roy Martinez',5,'2026-07-12','Have to visit on Mondays & Tuesdays.   They have a taco, enchilada, rice and beans for under $13.  So worth it.   Add the chips and great salsa and you will walk out satisfied.',false,true),
+  R('bellrd','google','Parker Christensen',1,'2026-07-11','You can call it to place an order but they’ll just place you on hold. Was on hold 5 minutes so decided to start driving up there. By the time I got there I was still on hold. 15 minutes. Showed the young man at the counter but he didn’t apologize, just said “what can I get you”. It was 8:30 Pm on a Friday night and they were not busy to justify this action. He was fiddling with menu’s and was not doing anything.',false,true),
+  R('bellrd','google','Fred Flores',3,'2026-07-10','I was going to try the chilaquiles but they come in a casserole. The steak is cubed already also just different is all. So pancakes and eggs it is.',false,true),
+  R('bellrd','google','Carrieonn',5,'2026-07-09','Always great service! The food is good and I love the salsa. They have tasty margaritas. Always a fun place for a happy hour!',false,true),
+  R('bellrd','google','dawn bachler',5,'2026-07-07','Awesome margaritas, fresh chips great salsa and the three amigo enchiladas fantastic.',false,true),
+  R('tempe','google','Troy Schmitz',5,'2026-07-13','Awesome! Everything was great. Best Guacamole ever!!!',false,true),
+  R('tempe','google','Maya Blanco',5,'2026-07-12','The ultimate comfort food for me! The lunch specials are fabulous',false,true),
+  R('tempe','google','K Monson',5,'2026-07-11','We went here for the first time. I had the shrimp street tacos which were wonderful. The restaurant is large with a relaxed atmosphere similar to most Mexican restaurants.  Our food was out quickly. The server was around, but didn\'t stop by super often. It was reasonably busy.  I would eat here again.',false,true),
+  R('goodyear','google','Soni',5,'2026-07-11','Manuels,  great Mexican food chain in Phoenix,AZ. The service was excellent, food awesome and served piping hot, also nice atmosphere just missing the live Mariachis music. The prices were on the average amount. 3 of us ate Lunch specials,cheese crisp,and drinks for under 70 Dollars.',false,true),
+  R('goodyear','google','Brad Wilkins',5,'2026-07-10','Great food, swift service and friendly staff',false,true),
+  R('goodyear','google','Christina Berner',5,'2026-07-09','Can get a little loud when the restaurant is full, but the food is delicious.  Have never had a bad meal here',false,true),
+  R('goodyear','google','Steve Berner',5,'2026-07-09','Great food. Good service.  One of the better Mexican restaurants in the west valley. Go to is original Popo\'s in Maryvale, but Manuel\'s is much closer.  Was not impressed with the newer Popo\'s in Goodyear.  It is not the same as the original.',false,true),
+  R('goodyear','google','Steve Lang',3,'2026-07-06','This was our first visit. We were greeted promptly and seated after a brief wait. Our server was friendly but obviously very busy. Our food arrived very quickly and was warm and delicious. The only negative was the illegal debit card surcharge that was added to our bill. Debit card surcharges have always been illegal in every state for decades. It is annoying to have this happen to chains that should, and probably do know better. Buyer beware of this scam.',false,true),
+  R('indianschool','google','Daniel Shanahan',5,'2026-07-08','Great spot all the workers are always nice and food is great',false,true),
+  R('indianschool','google','Leslie Honcharik',5,'2026-07-08','The best salsa in town.  Fresh tomatoes, onion, garlic, cilantro, green chili.  Chunky.  Tends to be mild, once in a while slightly spicy.  Also excellent tacos.  Pleasant atmosphere, it\'s nicer sitting in a booth in the bar.  Service is average, not excellent.  Priced about the same as other Mexican restaurants in Phoenix.  One drawback, closes at 9:00pm, pretty early for a city the size of Phoenix.',false,true),
+
 ];
 
 /* ---------------- STATE ---------------- */
@@ -1519,4 +1543,79 @@ const NEUTRAL_OPENERS = [
 ];
 const NEGATIVE_OPENERS = [
   "We're sorry to hear your visit didn't meet expectations",
-  "Thank you for flagging this, and we're
+  "Thank you for flagging this, and we're sorry we let you down"
+];
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function suggestReply(r, staff){
+  const first = r.name.split(' ')[0];
+  const loc = locName(r.locationId);
+  if(r.rating>=4){
+    const opener = pick(POSITIVE_OPENERS);
+    const staffLine = staff? ` We'll be sure to pass your shout-out along to ${staff}!` : '';
+    return `Hi ${first}, ${opener} about your visit to Manuel's ${loc}!${staffLine} We can't wait to welcome you back soon.\n\n- The Manuel's ${loc} Team`;
+  } else if(r.rating===3){
+    const opener = pick(NEUTRAL_OPENERS);
+    return `Hi ${first}, ${opener} about Manuel's ${loc}. We're glad parts of your visit were great, and we'd love the chance to make the rest even better next time. Feel free to reach out to our manager directly.\n\n- The Manuel's ${loc} Team`;
+  } else {
+    const opener = pick(NEGATIVE_OPENERS);
+    return `Hi ${first}, ${opener} at Manuel's ${loc}. This isn't the experience we want for our guests, and we'd like to make it right. Please reach out to our manager directly with your visit details so we can follow up personally.\n\n- The Manuel's ${loc} Team`;
+  }
+}
+function toggleSuggest(id){
+  document.getElementById('suggest-'+id).classList.toggle('open');
+}
+function regenerate(id, staff){
+  const r = REVIEWS.find(x=>x.id===id);
+  document.getElementById('suggest-text-'+id).value = suggestReply(r, staff);
+}
+function copySuggestion(id){
+  const ta = document.getElementById('suggest-text-'+id);
+  ta.select();
+  document.execCommand('copy');
+  if(navigator.clipboard) navigator.clipboard.writeText(ta.value).catch(()=>{});
+}
+
+/* ---------------- STATE SETTERS ---------------- */
+function selectLocation(id){
+  state.locationId = id;
+  const loc = LOCATIONS.find(l=>l.id===id);
+  document.getElementById('pageTitle').textContent = loc? loc.name.replace(/&ndash;/g,'-') : 'All Locations';
+  document.getElementById('pageSub').textContent = loc? loc.address : 'Overview across every store';
+  toggleSidebar(false);
+  renderAll();
+}
+function setPlatform(p){ state.platform = p; renderAll(); }
+function toggleStar(s){ state.stars.has(s)? state.stars.delete(s) : state.stars.add(s); renderAll(); }
+function setDate(v){ state.date = v; renderAll(); }
+function setStatus(v){ state.status = v; renderAll(); }
+function setSearch(v){ state.search = v; renderCards(); document.getElementById('listCount').textContent = filteredReviews().length+' reviews'; }
+function clearFilters(){
+  state.platform='all'; state.stars.clear(); state.date='all'; state.status='all'; state.search='';
+  document.getElementById('searchInput').value='';
+  document.getElementById('dateFilter').value='all';
+  document.getElementById('statusFilter').value='all';
+  renderAll();
+}
+function showUrgentOnly(){
+  state.stars = new Set([1,2]); state.status='unreplied';
+  renderAll();
+  window.scrollTo({top: document.querySelector('.filters').offsetTop - 10, behavior:'smooth'});
+}
+function toggleSidebar(open){
+  document.getElementById('sidebar').classList.toggle('open', open);
+  document.getElementById('overlay').classList.toggle('show', open);
+}
+
+/* ---------------- MAIN RENDER ---------------- */
+function renderAll(){
+  renderSidebar();
+  renderPlatformTabs();
+  renderStarChips();
+  renderSummary();
+  renderCards();
+}
+renderAll();
+</script>
+</body>
+</html>
