@@ -87,7 +87,7 @@ body{
 .alert-banner.hidden{display:none;}
 
 /* ---------- SUMMARY ---------- */
-.summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
 .summary-card{background:var(--white);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);}
 .summary-card .label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
 .summary-card .value{font-size:24px;font-weight:800;margin-top:4px;color:var(--charcoal);}
@@ -226,7 +226,8 @@ select, .search-box input{
     </div>
 
     <div class="summary-grid">
-      <div class="summary-card"><div class="label">Avg Rating</div><div class="value" id="sumAvg">&ndash;</div><div class="hint">across visible reviews</div></div>
+      <div class="summary-card"><div class="label">Avg Rating</div><div class="value" id="sumAvg">&ndash;</div><div class="hint">all time (scope)</div></div>
+      <div class="summary-card" id="sumDateCard" style="display:none;border:2px solid var(--terracotta);"><div class="label" style="color:var(--terracotta);">Date Range Avg</div><div class="value" id="sumDateAvg">&ndash;</div><div class="hint" id="sumDateHint">selected period</div></div>
       <div class="summary-card"><div class="label">Total Reviews</div><div class="value" id="sumTotal">0</div><div class="hint" id="sumTotalHint">in current scope</div></div>
       <div class="summary-card"><div class="label">New This Week</div><div class="value green" id="sumNew">0</div><div class="hint">since Jun 19, 2026</div></div>
       <div class="summary-card"><div class="label">Unreplied</div><div class="value accent" id="sumUnreplied">0</div><div class="hint">awaiting a response</div></div>
@@ -1475,6 +1476,25 @@ function renderSummary(){
   document.getElementById('sumNew').textContent = newWeek;
   document.getElementById('sumUnreplied').textContent = unreplied;
   document.getElementById('sumNegative').textContent = negative;
+
+  // Date range avg card — show only when a date filter is active
+  const dateCard = document.getElementById('sumDateCard');
+  const dateFiltered = (state.date !== 'all');
+  dateCard.style.display = dateFiltered ? '' : 'none';
+  if(dateFiltered){
+    const dateAvg = visible.length ? (visible.reduce((s,r)=>s+r.rating,0)/visible.length) : null;
+    document.getElementById('sumDateAvg').textContent = dateAvg ? dateAvg.toFixed(2)+' ★' : '—';
+    // Build a readable label for the hint
+    let hint = visible.length + ' review' + (visible.length===1?'':'s');
+    if(state.date==='custom'){
+      const f = state.dateFrom ? state.dateFrom.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '…';
+      const t = state.dateTo ? state.dateTo.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '…';
+      hint += ' · ' + f + ' – ' + t;
+    } else {
+      hint += ' · last ' + state.date + ' days';
+    }
+    document.getElementById('sumDateHint').textContent = hint;
+  }
 
   const banner = document.getElementById('alertBanner');
   const urgentAll = scope.filter(r=>r.rating<=2 && !r.replied);
