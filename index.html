@@ -115,6 +115,9 @@ select, .search-box input{
 .search-box{flex:1;min-width:200px;display:flex;align-items:center;gap:6px;border:1px solid var(--gray-light);border-radius:var(--radius-sm);padding:0 10px;background:var(--white);}
 .search-box input{border:none;flex:1;padding:8px 0;outline:none;}
 .clear-filters{background:none;border:none;color:var(--terracotta);font-size:12px;font-weight:700;cursor:pointer;}
+.export-btn{background:var(--green);color:var(--cream);border:none;border-radius:var(--radius-sm);padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.export-btn:hover{background:var(--green-light);}
+.export-btn:disabled{opacity:.45;cursor:not-allowed;}
 
 /* ---------- REVIEW LIST ---------- */
 .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -260,6 +263,13 @@ select, .search-box input{
           <option value="replied">Replied only</option>
         </select>
         <button class="clear-filters" onclick="clearFilters()">Clear filters</button>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+          <select id="exportFormat" title="Export format">
+            <option value="md">Markdown (.md)</option>
+            <option value="txt">Plain text (.txt)</option>
+          </select>
+          <button class="export-btn" id="exportBtn" onclick="exportReport()">&#8681; Export report</button>
+        </div>
       </div>
       <div class="filter-row">
         <div class="chip-group" id="starChips"></div>
@@ -279,7 +289,7 @@ select, .search-box input{
 </div>
 
 <script>
-const TODAY = new Date();
+const TODAY = new Date('2026-09-15');
 
 /* ---------------- LOCATIONS ----------------
    Ratings/IDs marked confirmed:true were pulled directly from the
@@ -2619,6 +2629,43 @@ const REVIEWS = [
   R('indianschool','google','Bullet Medina',4,'2025-06-23','',false,true),
   R('indianschool','google','Lydia Sorensen',5,'2025-06-21','Been going here for probably 40 years!! Love this place and the employee\'s are amazing!!! Hi Luis 👋',false,true),
 
+// ---- NEW GOOGLE REVIEWS (auto-updated 2026-08-23) ----
+  R('tempe','google','Cin K',5,'2026-08-23','I ordered food for pick up yesterday, and everything was put together so nicely. They even did the dessert last so it would be cold for the drive home. All the ladies were so kind and helpful. They even called today to check on how my order was. I’ve been coming here for years and the food and service is always top tier. Thank you!',false,true),
+  R('tempe','google','Burton G',5,'2026-08-23','Great,service good food and easy location to find rite off freeway great neighborhood restaurant. Been in the area for years and can\'t beat the specials',false,true),
+  R('tempe','google','Bernie',4,'2026-08-20','The food was really good. However, they got one of my pick up items wrong. Didn\'t realize it until I got home.😕 So ended up paying extra on something I did not order.',false,true),
+  R('tempe','google','John R Cochran',5,'2026-08-17','Excellent Food quality and great service from both server and management. Highly recommend',true,true),
+  R('bellrd','google','Carrieonn',5,'2026-08-21','Always great service! The food is good and I love the salsa. They have tasty margaritas. Always a fun place for a happy hour!',false,true),
+  R('bellrd','google','Michel Brown',4,'2026-08-20','I went today for a group lunch.  The lunch. Menu had enough from which to choose.  The service was attentive enough for the group. I had a delicious green chili burro with rice and beans.',false,true),
+  R('bellrd','google','David Pollard',5,'2026-08-19','Family owned.  They remember their customers.',false,true),
+  R('peoria','google','AJ Medina',4,'2026-08-24','Good food, good service. Update: New servers, veteran servers, service is good but not great, kitchen staff still making mistakes, if you order to go orders, you have to check and verify your order. Inside service is better but verification still recommended. 4 stars, Would recommend but buyer beware. Update 2: Servers doing better job, cooks making orders correctly but all is based on eating inside restaurant. Prices are up but so is everything else so par for the course. Plenty of options to go easy on the wallet without going away less than satisfied.',false,true),
+  R('peoria','google','Scott Redish',5,'2026-08-23','I\'ll give it a five-star review for a category that it\'s in. You don\'t go to Manuel\'s expecting fine dining you go there for some good food a couple margaritas and to hang out with your friends. Stuff is friendly, drinks are good as is the food.',false,true),
+  R('peoria','google','David Thompson',5,'2026-08-19','My lunch was great.  I had a chicken chili, was great. My service was very good too.',false,true),
+  R('goodyear','google','Tony Scocozza',3,'2026-08-22','The food is a little pricey and wanting for flavor.. Service is very good.',false,true),
+  R('goodyear','google','Patrick Vargas',4,'2026-08-20','Everything was great. Even tho it was lunch time and not busy but had to wait for things.',false,true),
+  R('scottsdale','google','Marge',5,'2026-08-20','Love the band and the people!',false,true),
+
+// ---- NEW GOOGLE REVIEWS (auto-updated 2026-09-15) ----
+  R('goodyear','google','Damaris Foster',3,'2026-09-14','Delisus and romantic',false,true),
+  R('goodyear','google','Faith Hettesheimer',5,'2026-09-13','Great customer service Great food',false,true),
+  R('goodyear','google','Wendy Streiff Coughran',5,'2026-09-13','Great Tamales',false,true),
+  R('goodyear','google','David Lazaro',4,'2026-09-12','The food was fresh, hot, and good 👍🏾',false,true),
+  R('goodyear','google','Md. Mahbubur Rahman',5,'2026-09-11','Manuel\'s Mexican Restaurant & Cantina was a fun place to enjoy a meal. The food was flavorful and satisfying, and the atmosphere had a welcoming, relaxed feel. The service was friendly, making the whole visit enjoyable.',false,true),
+  R('tempe','google','Cynthia Zuerlein',1,'2026-09-13','Half of a tomatoes is not a garnish. Tomatoes not cleaned.',false,true),
+  R('tempe','google','Dawn Davies',5,'2026-09-13','I love this place. Great Margueritas, great service, great food.',false,true),
+  R('peoria','google','Aairona McCauley',5,'2026-09-09','The street tacos are so good.',false,true),
+  R('peoria','google','S.333',5,'2026-09-08','I can\'t say it enough... I love dining in at this place it\'s all around the most delicious food employees are above and beyond for excelling in customer service as well as the atmosphere being so great! Love Manuel\'s 💗',false,true),
+  R('peoria','google','Rae',1,'2026-09-07','I wish I could give this place ZERO stars. Manuel’s Mexican Food on 53rd Avenue and Peoria was hands down one of the worst restaurant experiences we’ve had in a very long time.  What makes it even worse is that Manuel’s USED to be one of the best Mexican food restaurants in Arizona. I genuinely don’t know what happened, but the quality has completely fallen apart.  First, the restaurant itself looks old, dingy, run-down, and desperately in need of an update. For the prices they’re charging, you would expect both the restaurant and the food to be maintained at a much higher standard.  Now the food—which was absolutely awful.  The rice was dry, overloaded with garlic, and had a strange taste that reminded me of chlorine water. The beans were watery, runny, and so salty they were difficult to eat. The tortillas were hard. The enchilada sauce was bitter and unpleasant.  And the meat? Completely disappointing. It was so overwhelmed with garlic and seasoning that I could barely even taste the actual meat. When I’m paying these prices, I expect a decent portion of good-quality meat—not something buried under seasoning.  The fajitas were probably the biggest insult. They came out sitting on a massive pile of onions with BARELY ANY MEAT. For what Manuel’s charges for fajitas, the amount of meat they served was embarrassing. Customers are paying for fajitas, not an expensive plate of sautéed onions with a few pieces of meat thrown on top.  The service was okay, and our server wasn’t the problem. The FOOD was the problem.  It is honestly sad to see how far this restaurant has fallen. This used to be somewhere we could count on for great Mexican food, and now I wouldn’t recommend this location to anyone. The quality, portions, and overall condition of the restaurant simply do not match the prices they are charging.  We spend our money eating out because we want to enjoy a good meal, and this was a complete waste of money. We will NEVER return to this location, and when friends or neighbors ask us for Mexican food recommendations, Manuel’s will absolutely not be one of them.  Management seriously needs to take a hard look at what is coming out of that kitchen because whatever changed needs to change back. This was beyond disappointing. A total dump !!’',false,true),
+  R('chandler','google','Ryan Peters',5,'2026-09-12','Accommodations for a group before a Hamilton High School football game. Food, service, drinks were all excellent.',false,true),
+  R('shea','google','Adam Carrasco',1,'2026-09-13','I wish I could give this 0 stars.  Service was inattentive, switched between 2 servers and a manager neither knew what they were doing and took flagging down.  The food took over 45 min and orders were either incorrect or missing items.  Horrible!  I will never be back.  There was only 5 of us and not that busy at all, I can see why.  I hope this closes so something else can take its place.',false,true),
+  R('shea','google','TankerToad',5,'2026-09-13','Ordered online with no problems. When I arrived to pick up my  order, Natasha kindly pointed out the order was requested an hour later. Totally my fault. Natasha had the order expedited and even offered us water while we waited. We received the order within 20 minutes. Thank you, Natasha!',false,true),
+  R('shea','google','Alexandra Clark',5,'2026-09-12','Tortilla soup is amazing, cheese crisps are always a hit, and the service was great. My husband and I got a margarita flight to share that was super good but then I ordered a Texas margarita (usually my go to) and it was so incredibly strong I couldn\'t even drink it.',false,true),
+  R('shea','google','Eve G.',1,'2026-09-12','If we could give a Zero we would.  This is the third straight time and LAST that we order the Large Mexican  Pizzas.   Loved for years but going down the drain. Ordered Chicken an Shredded Beef Mex pizzas. The last time the mgr. Was so wonderful to give a credit.  Again today... taste like they fry in gasoline AGAIN. 66 bucks is close to a day\'s hard earned pay! We are done.',false,true),
+  R('indianschool','google','Michelle Lusania',3,'2026-09-15','My issue is not the food or service. Both were great. My issue is that when our check came to the table, there is now a $2 increase to your total if paying with card. This is not posted anywhere. It’s also more than the standard 50 cent fee places charge for card usage. The issue isn’t that $2 is a large sum, although everything is getting expensive. It’s the surprise factor of it. Honestly, it left such a distaste that I don’t know if I want to come back.',false,true),
+  R('indianschool','google','Scott and Janet Balingit',5,'2026-09-08','Great food, great service! A pleasant place to dine.',false,true),
+  R('bellrd','google','Insensitive Jokester',1,'2026-09-13','You know, walking into an establishment with good vibes is great and all, but for the second time we go in, ask for a booth, and get seated, we don\'t like waiting for 15 minutes and not even get our drink order. There were 2 servers literally looking at us by the front door and neither one moved an inch. It wasn\'t even that busy and everyone just walked by us. We all just made that choice to just get up and leave with the waitress giving us a glare because we decided not to wait any longer sitting next to some loud clowns crying about ordering a beer or fixing their taco order. We even noticed another table 8 feet away that hadn\'t even been helped yet and they were there longer then us. I don\'t know if we will come back to this location.',false,true),
+  R('bellrd','google','Holly Woolsey',5,'2026-09-08','Love their mexican pizza and good drinks. Great lunch specials.',false,true),
+  R('scottsdale','google','Marie Sage',5,'2026-09-12','I love it there on Friday nights  So much fun 💃',false,true),
+
 ];
 
 /* ---------------- STATE ---------------- */
@@ -2926,6 +2973,121 @@ function showUrgentOnly(){
 function toggleSidebar(open){
   document.getElementById('sidebar').classList.toggle('open', open);
   document.getElementById('overlay').classList.toggle('show', open);
+}
+
+/* ---------------- EXPORT REPORT ---------------- */
+function describeScope(){
+  const locationLabel = state.locationId==='all' ? 'All locations (8 stores)' : (locName(state.locationId) + ' — ' + (LOCATIONS.find(l=>l.id===state.locationId)||{}).address);
+  const platform = state.platform==='all' ? 'All platforms' : platformLabel(state.platform);
+  let dateLabel;
+  if(state.date==='custom'){
+    const f = state.dateFrom ? fmtDate(state.dateFrom) : 'earliest';
+    const t = state.dateTo ? fmtDate(state.dateTo) : 'latest';
+    dateLabel = f + ' to ' + t;
+  } else if(state.date!=='all'){
+    dateLabel = 'Last ' + state.date + ' days (as of ' + fmtDate(TODAY) + ')';
+  } else {
+    dateLabel = 'All time';
+  }
+  const starLabel = state.stars.size>0 ? [...state.stars].sort().map(s=>s+'★').join(', ') : 'All ratings';
+  const statusLabel = state.status==='all' ? 'Any reply status' : (state.status==='unreplied' ? 'Unreplied only' : 'Replied only');
+  return { locationLabel, platform, dateLabel, starLabel, statusLabel, search: state.search || '' };
+}
+
+function buildReport(reviews, fmt){
+  const md = (fmt === 'md');
+  const S = describeScope();
+  const n = reviews.length;
+  const avg = n ? (reviews.reduce((a,r)=>a+r.rating,0)/n) : 0;
+  const dist = {5:0,4:0,3:0,2:0,1:0};
+  reviews.forEach(r=>dist[r.rating]=(dist[r.rating]||0)+1);
+  const unreplied = reviews.filter(r=>!r.replied).length;
+  const priority = reviews.filter(r=>r.rating<=2).sort((a,b)=> a.rating-b.rating || new Date(b.date)-new Date(a.date));
+
+  const L = [];
+  const h1 = t => L.push(md ? '# '+t : t.toUpperCase());
+  const h2 = t => L.push(md ? '\n## '+t : '\n'+t+'\n'+'='.repeat(t.length));
+  const rule = () => L.push(md ? '\n---\n' : '\n'+'-'.repeat(60));
+
+  h1("Manuel's Mexican Restaurant — Review Export");
+  L.push((md?'**Generated:** ':'Generated: ') + fmtDate(TODAY));
+  L.push((md?'**Location:** ':'Location: ') + S.locationLabel);
+  L.push((md?'**Platform:** ':'Platform: ') + S.platform);
+  L.push((md?'**Date range:** ':'Date range: ') + S.dateLabel);
+  L.push((md?'**Rating filter:** ':'Rating filter: ') + S.starLabel);
+  L.push((md?'**Reply status:** ':'Reply status: ') + S.statusLabel);
+  if(S.search) L.push((md?'**Search term:** ':'Search term: ') + '"'+S.search+'"');
+
+  h2('Summary');
+  L.push((md?'- ':'') + 'Reviews in selection: ' + n);
+  L.push((md?'- ':'') + 'Average rating: ' + (n ? avg.toFixed(2)+' ★' : 'n/a'));
+  L.push((md?'- ':'') + 'Unreplied: ' + unreplied);
+  L.push((md?'- ':'') + 'Needs attention (1–2★): ' + priority.length);
+  L.push('');
+  if(md){
+    L.push('| Rating | Count |');
+    L.push('|:------:|:-----:|');
+    [5,4,3,2,1].forEach(s=>L.push('| '+starString(s)+' | '+dist[s]+' |'));
+  } else {
+    [5,4,3,2,1].forEach(s=>L.push('  '+starString(s)+'  '+dist[s]));
+  }
+
+  const fmtReview = (r) => {
+    const head = starString(r.rating) + '  ·  ' + r.name + '  ·  ' + fmtDate(r.date)
+      + '  ·  ' + platformLabel(r.platform) + (state.locationId==='all' ? '  ·  '+locName(r.locationId) : '')
+      + '  ·  ' + (r.replied ? 'Replied' : 'NO REPLY');
+    if(md){
+      L.push('\n**'+head+'**');
+      if(r.text) L.push('\n> ' + r.text.replace(/\n+/g,' ')); else L.push('\n> _(rating only, no written review)_');
+    } else {
+      L.push('\n'+head);
+      L.push(r.text ? '  '+r.text.replace(/\n+/g,' ') : '  (rating only, no written review)');
+    }
+  };
+
+  if(priority.length){
+    h2('Priority — needs attention (1–2★)');
+    L.push(md ? '_Lowest-rated first. Share these with the location teams to resolve._' : 'Lowest-rated first. Share these with the location teams to resolve.');
+    priority.forEach(fmtReview);
+  }
+
+  h2('All reviews in this selection ('+n+')');
+  if(!n){
+    L.push('No reviews match the current filters.');
+  } else if(state.locationId==='all'){
+    LOCATIONS.forEach(loc=>{
+      const group = reviews.filter(r=>r.locationId===loc.id).sort((a,b)=> new Date(b.date)-new Date(a.date));
+      if(!group.length) return;
+      L.push(md ? '\n### '+loc.name+' ('+group.length+')' : '\n-- '+loc.name+' ('+group.length+') --');
+      group.forEach(fmtReview);
+    });
+  } else {
+    reviews.slice().sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(fmtReview);
+  }
+
+  rule();
+  L.push((md?'_':'')+'Generated from the Manuel\'s reviews dashboard.'+(md?'_':''));
+  return L.join('\n');
+}
+
+function exportReport(){
+  const fmt = document.getElementById('exportFormat').value;
+  const reviews = filteredReviews();
+  const content = buildReport(reviews, fmt);
+  const stamp = TODAY.toISOString().slice(0,10);
+  const locSlug = state.locationId==='all' ? 'all-locations' : state.locationId;
+  let rangeSlug = state.date==='custom' && (state.dateFrom||state.dateTo)
+    ? '_' + (state.dateFrom?state.dateFrom.toISOString().slice(0,10):'start') + '_to_' + (state.dateTo?state.dateTo.toISOString().slice(0,10):'end')
+    : (state.date!=='all' && state.date!=='custom' ? '_last'+state.date+'d' : '');
+  const fname = 'manuels-reviews_' + locSlug + rangeSlug + '_' + stamp + '.' + fmt;
+  const mime = fmt==='md' ? 'text/markdown' : 'text/plain';
+  const blob = new Blob([content], {type: mime+';charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
 
 /* ---------------- MAIN RENDER ---------------- */
